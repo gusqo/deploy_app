@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IoMdClose } from 'react-icons/io';
 import { useDispatch, useSelector } from 'react-redux';
 import { closeModal } from '../../redux/slices/modalSlice';
-import { fetchPostItem } from '../../redux/slices/apiSlice';
+import {
+  fetchGetItem,
+  fetchPostItem,
+  fetchPutTaskItem,
+} from '../../redux/slices/apiSlice';
 import { toast } from 'react-toastify';
 
 const Modal = () => {
@@ -11,21 +15,68 @@ const Modal = () => {
     dispatch(closeModal());
   };
 
+  const { modalType, task } = useSelector((state) => state.modal);
+  console.log(modalType, task);
   const state = useSelector((state) => state.auth.authData);
   const user = state?.sub;
+
+  const showModalContents = (modalType, str1, str2, str3) => {
+    switch (modalType) {
+      case 'update':
+        return str1;
+      case 'details':
+        return str2;
+      default:
+        return str3;
+    }
+  };
+
+  const modalTitle = showModalContents(
+    modalType,
+    '할일 수정하기',
+    '할일 상세보기',
+    '할일 추가하기'
+  );
+  const modalBtn = showModalContents(
+    modalType,
+    '할일 수정하기',
+    '',
+    '할일 추가하기'
+  );
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    data: '',
+    date: '',
     isCompleted: false,
     isImportant: false,
     userId: user,
   });
 
+  useEffect(() => {
+    if (modalType === 'details' || modalType === 'update') {
+      setFormData({
+        title: task.title,
+        description: task.description,
+        date: task.date,
+        isCompleted: task.iscompleted,
+        isImportant: task.isimportant,
+        _id: task._id,
+      });
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        date: '',
+        isCompleted: false,
+        isImportant: false,
+        userId: user,
+      });
+    }
+  }, [modalType, task, user]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    // console.log(name, value, type, checked);
     setFormData((prev) => ({
       ...prev,
       // input의 타입이 checked일 경우 checked값, 아니면 일반 value 값
@@ -34,7 +85,7 @@ const Modal = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); //기본 기능 차단
+    e.preventDefault(); // 기본 기능 차단
 
     if (!user) {
       toast.error('잘못된 사용자 입니다.');
@@ -58,19 +109,27 @@ const Modal = () => {
 
     // console.log(formData);
     try {
-      await dispatch(fetchPostItem(formData)).unwrap();
-      toast.success('할인이 추가되었습니다.');
+      if (modalType === 'create') {
+        await dispatch(fetchPostItem(formData)).unwrap();
+        toast.success('할일이 추가되었습니다.');
+      } else if (modalType === 'update') {
+        await dispatch(fetchPutTaskItem(formData)).unwrap();
+        toast.success('할일이 수정되었습니다.');
+      }
     } catch (error) {
-      console.log('Error Post Item Data: ', error);
-      toast.error('할일 추가에 실패했습니다. 콘솔을 확인해 주세요.');
+      console.log('Error Post or Put Item Data: ', error);
+      toast.error('할일 추가 또는 수정에 실패했습니다. 콘솔을 확인해 주세요.');
     }
+
     handleCloseModal();
+
+    await dispatch(fetchGetItem(user)).unwrap();
   };
   return (
     <div className="modal fixed bg-black bg-opacity-50 w-full h-full left-0 top-0 z-50 flex justify-center items-center">
       <div className="form-wrapper bg-gray-700 rounded-md w-1/2 flex flex-col items-center relative p-4">
         <h2 className="text-2xl py-2 border-b border-gray-300 w-fit font-semibold">
-          코딩하기
+          {modalTitle}
         </h2>
         <form className="w-full" onSubmit={handleSubmit}>
           <div className="input-control">
@@ -80,18 +139,20 @@ const Modal = () => {
               id="title"
               name="title"
               value={formData.title}
-              placeholder="제목을 입력해주세요..."
+              placeholder="제목을 입력해 주세요..."
               onChange={handleChange}
+              {...(modalType === 'details' && { disabled: true })}
             />
           </div>
           <div className="input-control">
             <label htmlFor="description">내용</label>
             <textarea
+              name="description"
               id="description"
               value={formData.description}
-              name="description"
-              placeholder="내용을 입력해주세요..."
+              placeholder="내용을 입력해 주세요..."
               onChange={handleChange}
+              {...(modalType === 'details' && { disabled: true })}
             ></textarea>
           </div>
           <div className="input-control">
@@ -102,6 +163,7 @@ const Modal = () => {
               name="date"
               value={formData.date}
               onChange={handleChange}
+              {...(modalType === 'details' && { disabled: true })}
             />
           </div>
           <div className="input-control toggler">
@@ -112,6 +174,7 @@ const Modal = () => {
               name="isCompleted"
               checked={formData.isCompleted}
               onChange={handleChange}
+              {...(modalType === 'details' && { disabled: true })}
             />
           </div>
           <div className="input-control toggler">
@@ -122,21 +185,24 @@ const Modal = () => {
               name="isImportant"
               checked={formData.isImportant}
               onChange={handleChange}
+              {...(modalType === 'details' && { disabled: true })}
             />
           </div>
 
           <div className="submit-btn flex justify-end">
             <button
               type="submit"
-              className="flex justify-end bg-black py-3 rounded-md hover:bg-slate-900"
+              className={`flex justify-end bg-black py-3 px-6 rounded-md hover:bg-slate-900 ${
+                modalType === 'details' ? 'hidden' : ''
+              }`}
             >
-              할일 추가하기
+              {modalBtn}
             </button>
           </div>
         </form>
 
         <IoMdClose
-          className="absolute top-10 right-10 cursor-pointer"
+          className="absolute right-10 top-10 cursor-pointer"
           onClick={handleCloseModal}
         />
       </div>

@@ -10,6 +10,7 @@ import { login, logout } from '../../redux/slices/authSlice';
 const Navbar = () => {
   const path = useLocation();
   const isActive = (location) => path.pathname === location;
+
   const googleClientId = import.meta.env.VITE_AUTH_CLIENT_ID;
   const dispatch = useDispatch();
   const state = useSelector((state) => state.auth.authData);
@@ -36,23 +37,23 @@ const Navbar = () => {
     setIsAuth(false);
   };
 
-  const handleLoginError = () => {
-    console.log('Google Login Error:', error);
+  const handleLoginError = (error) => {
+    console.log('Google Logih Error: ', error);
   };
 
   return (
     <nav className="bg-[#212121] w-1/5 h-full rounded-sm border border-gray-500 py-10 px-4 flex flex-col justify-between items-center">
       <div className="logo-wrapper flex w-full items-center justify-center gap-8">
         <div className="logo"></div>
-        <h2 className="font-semibold text-x1">
-          <Link to="/">HYUNBAE</Link>
+        <h2 className="font-semibold text-xl">
+          <Link to="/">MARSHALL</Link>
         </h2>
       </div>
       <ul className="menus">
         {navMenus.map((menu, idx) => (
           <li
             key={idx}
-            className={`rounded-sm mb-1 border border-gray-700 hover:bg-gray-950 transition-all duration-300 ${
+            className={`rounded-sm mb-2 border border-gray-700 hover:bg-gray-950 transition-all duration-300 ${
               isActive(menu.to) ? 'bg-gray-950' : ''
             }`}
           >
@@ -64,7 +65,10 @@ const Navbar = () => {
       </ul>
       {isAuth ? (
         <div className="auth-button w-4/5 flex items-center">
-          <button className="flex justify-center items-center gap-2 bg-gray-300 text-gray-900 px-3 py-4 rounded-md w-full onClick={handleLogoutClick">
+          <button
+            className="flex justify-center items-center gap-2 bg-gray-300 text-gray-900 py-3 px-4 rounded-md w-full"
+            onClick={handleLogoutClick}
+          >
             <FcGoogle className="w-5 h-5" />
             <span className="text-sm">{name}님 로그아웃</span>
           </button>
@@ -84,9 +88,9 @@ const Navbar = () => {
         </div>
       )}
       {/* <div className="auth-button w-4/5 flex items-center">
-        <button className="flex justify-center items-center gap-2 bg-gray-300 text-gray-900 px-3 py-4 rounded-md w-full">
+        <button className="flex justify-center items-center gap-2 bg-gray-300 text-gray-900 py-3 px-4 rounded-md w-full">
           <FcGoogle />
-          <span>현배님 로그아웃</span>
+          <span className="text-sm">마샬님 로그아웃</span>
         </button>
       </div> */}
       {/* <GoogleOAuthProvider clientId={googleClientId}>
